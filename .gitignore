@@ -11,6 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+
+# Vercel
+.vercel
+
+# Python artifacts (legacy backend removed; ignore any local leftovers)
+.venv
+__pycache__/
 
 # Editor directories and files
 .vscode/*

@@ -1,5 +1,5 @@
-/* The rating engine now lives in the Python backend (backend/engine.py),
-   which runs openskill.py's Bradley-Terry model with margin-of-victory.
+/* The rating engine lives in the serverless API (api/_engine.ts), which runs
+   openskill.js's Bradley-Terry model with margin-of-victory.
    This module just adapts the API payload into the shapes components use. */
 import type { Game, LeagueStats, Player, PlayerStats, ProcessedGame } from "./types";
 
