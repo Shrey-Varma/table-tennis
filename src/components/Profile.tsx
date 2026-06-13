@@ -187,6 +187,23 @@ export function Profile({
             </div>
           );
         })()}
+        <div className="tile">
+          <div className="v num">{s.avgOpponentRatingInWins !== null ? fmt1(s.avgOpponentRatingInWins) : "—"}</div>
+          <div className="k">Avg rating beaten</div>
+          <div className="s">{s.avgOpponentRatingInLosses !== null ? `lost to ${fmt1(s.avgOpponentRatingInLosses)}` : "quality of wins"}</div>
+        </div>
+        <div className="tile">
+          <div className="v num">{s.blowoutsDealt}–{s.blowoutsSuffered}</div>
+          <div className="k">Blowouts (≥7)</div>
+          <div className="s">{s.whitewashesDealt} whitewash{s.whitewashesDealt === 1 ? "" : "es"} dealt</div>
+        </div>
+        {!s.provisional && (
+          <div className="tile">
+            <div className="v num">{s.ratingGapToFirst <= 0.05 ? "Leader" : `-${s.ratingGapToFirst.toFixed(1)}`}</div>
+            <div className="k">Gap to #1</div>
+            <div className="s">rating points behind top</div>
+          </div>
+        )}
       </div>
 
       {/* rating history */}

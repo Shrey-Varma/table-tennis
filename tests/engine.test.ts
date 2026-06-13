@@ -258,3 +258,37 @@ describe("league superlatives & pairings", () => {
     expect(fm[0].winProbA).toBeLessThan(1);
   });
 });
+
+describe("quality, blowouts, parity", () => {
+  it("counts blowouts and whitewashes, and tracks quality of wins", () => {
+    const st = compute(
+      [player("A", 1), player("B", 2)],
+      [game("A", "B", 11, 1), game("A", "B", 11, 0)],
+    );
+    expect(st.playerStats.A.blowoutsDealt).toBe(2); // both margins ≥7
+    expect(st.playerStats.A.whitewashesDealt).toBe(2); // opponent scored ≤1
+    expect(st.playerStats.B.blowoutsSuffered).toBe(2);
+    expect(st.playerStats.B.whitewashesSuffered).toBe(2);
+    expect(st.playerStats.A.avgOpponentRatingInWins).not.toBeNull();
+    expect(st.playerStats.A.avgOpponentRatingInLosses).toBeNull(); // A never lost
+  });
+
+  it("computes gap to #1, most feared, and a positive rating spread", () => {
+    const players = [player("X", 1), player("Y", 2), player("Z", 3)];
+    const games: Game[] = [];
+    for (let i = 0; i < 6; i++) {
+      games.push(game("X", "Y", 11, 4));
+      games.push(game("X", "Z", 11, 4));
+      games.push(game("Y", "Z", 11, 7));
+    }
+    const st = compute(players, games);
+    const leader = st.rankedIds[0];
+    expect(leader).toBe("X");
+    expect(st.playerStats[leader].ratingGapToFirst).toBeCloseTo(0, 6);
+    for (const id of st.rankedIds.slice(1)) {
+      expect(st.playerStats[id].ratingGapToFirst).toBeGreaterThan(0);
+    }
+    expect(st.league.mostFeared?.player.id).toBe("X");
+    expect(st.league.ratingSpread).toBeGreaterThan(0);
+  });
+});

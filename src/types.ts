@@ -142,6 +142,20 @@ export interface PlayerStats {
   ratingFromPeak: number;
   mostPlayedOpponentId: string | null;
   lastPlayedAt: number | null;
+
+  // --- Quality of competition ---
+  /** Avg current rating of opponents this player has beaten; null if no wins. */
+  avgOpponentRatingInWins: number | null;
+  /** Avg current rating of opponents this player has lost to; null if no losses. */
+  avgOpponentRatingInLosses: number | null;
+  /** Rating points behind the #1 player (0 if they are #1). */
+  ratingGapToFirst: number;
+
+  // --- Blowouts ---
+  blowoutsDealt: number; // wins by ≥7
+  blowoutsSuffered: number; // losses by ≥7
+  whitewashesDealt: number; // wins where opponent scored ≤1
+  whitewashesSuffered: number; // losses where this player scored ≤1
 }
 
 /** A league award: a player plus the metric value that earned it. */
@@ -196,6 +210,10 @@ export interface LeagueStats {
   // --- Pairings ---
   rivalries: Rivalry[]; // closest, most-contested matchups
   fairestMatches: MatchSuggestion[]; // most balanced pairings to schedule next
+
+  mostFeared: Superlative | null; // highest average win probability across the field
+  /** Std-dev of ratings across active players. Lower = tighter, more competitive league. */
+  ratingSpread: number;
 }
 
 export const PROVISIONAL_THRESHOLD = 5;

@@ -123,6 +123,18 @@ export function Insights({
             <div className="s">steadiest ratings</div>
           </div>
         )}
+        {league.mostFeared && (
+          <div className="tile">
+            <div className="v">{league.mostFeared.player.name}</div>
+            <div className="k">Most feared</div>
+            <div className="s">{pct(league.mostFeared.value)} avg win odds vs field</div>
+          </div>
+        )}
+        <div className="tile">
+          <div className="v num">{league.ratingSpread.toFixed(1)}</div>
+          <div className="k">League parity</div>
+          <div className="s">rating spread · lower = tighter</div>
+        </div>
       </div>
 
       <div className="panel">

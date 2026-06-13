@@ -115,8 +115,10 @@ export function compute(players: Player[], games: Game[]): ApiState {
     (a, b) =>
       Number(a.provisional) - Number(b.provisional) || b.rating.exposed - a.rating.exposed,
   );
+  const leaderExposed = ranked.length ? ranked[0].rating.exposed : 0;
   ranked.forEach((s, i) => {
     s.rank = i + 1;
+    s.ratingGapToFirst = leaderExposed - s.rating.exposed;
     const h = s.ratingHistory;
     if (h.length > 5) {
       const past = h[h.length - 6].exposed;
@@ -362,6 +364,14 @@ function computePlayerStats(
     mostPlayedOpponentId:
       mostPlayed && mostPlayed.wins + mostPlayed.losses > 0 ? mostPlayed.opponentId : null,
     lastPlayedAt: mine.length ? Math.max(...mine.map((g) => g.playedAt)) : null,
+
+    avgOpponentRatingInWins: avg(wins.map((g) => exposedNow(oppIdOf(g)))),
+    avgOpponentRatingInLosses: avg(losses.map((g) => exposedNow(oppIdOf(g)))),
+    ratingGapToFirst: 0, // filled in by compute() once the field is ranked
+    blowoutsDealt: wins.filter((g) => g.margin >= 7).length,
+    blowoutsSuffered: losses.filter((g) => g.margin >= 7).length,
+    whitewashesDealt: wins.filter((g) => g.loserScore <= 1).length,
+    whitewashesSuffered: losses.filter((g) => g.loserScore <= 1).length,
   };
 }
 
@@ -461,6 +471,19 @@ function leagueStats(
   }
   fairestMatches.sort((x, y) => y.quality - x.quality);
 
+  // Most feared: highest average win probability across the whole field.
+  let mostFeared: Superlative | null = null;
+  for (const s of ranked) {
+    if (s.games < 1) continue;
+    const vals = Object.values(matchups[s.player.id] ?? {});
+    if (!vals.length) continue;
+    const meanWinProb = vals.reduce((a, b) => a + b, 0) / vals.length;
+    if (!mostFeared || meanWinProb > mostFeared.value) {
+      mostFeared = { player: s.player, value: meanWinProb };
+    }
+  }
+  const ratingSpread = stddev(ranked.filter((s) => s.games >= 1).map((s) => s.rating.exposed));
+
   return {
     totalGames: processed.length,
     totalPoints: processed.reduce((acc, g) => acc + g.aScore + g.bScore, 0),
@@ -487,5 +510,7 @@ function leagueStats(
     underachiever: topSuperlative(played3, (s) => s.winsAboveExpectation, -1),
     rivalries,
     fairestMatches: fairestMatches.slice(0, 4),
+    mostFeared,
+    ratingSpread,
   };
 }
