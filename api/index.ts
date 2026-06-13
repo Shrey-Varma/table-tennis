@@ -175,4 +175,13 @@ app.onError((err, c) => {
   return c.json({ detail: "Something went wrong on the league server." }, 500);
 });
 
-export default handle(app);
+// Vercel's Node runtime treats a default export as the legacy (req, res) => void
+// signature and ignores a returned Response. Export named HTTP-method handlers
+// instead — Vercel recognizes these as Web fetch-style (Request -> Response), and
+// Hono dispatches every method/path internally. We use GET/POST/DELETE; OPTIONS
+// covers CORS preflight.
+const handler = handle(app);
+export const GET = handler;
+export const POST = handler;
+export const DELETE = handler;
+export const OPTIONS = handler;
