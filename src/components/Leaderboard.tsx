@@ -72,7 +72,7 @@ export function Leaderboard({
                       </span>
                     )}
                   </div>
-                  <div className="k">Rating</div>
+                  <div className="k">Rating · ±{s.ratingPlusMinus.toFixed(1)}</div>
                 </span>
                 <span className="slab-stat">
                   <div className="v num">{s.wins}–{s.losses}</div>

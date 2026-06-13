@@ -53,6 +53,8 @@ export interface HeadToHead {
   winProb: number;
   avgMarginInWins: number | null;
   avgMarginInLosses: number | null;
+  /** Avg of (my points − their points) across all games vs them. >0 = dominant. */
+  netAvgMargin: number | null;
   lastResults: ("W" | "L")[]; // most recent last
 }
 
@@ -90,6 +92,83 @@ export interface PlayerStats {
   nemesis: HeadToHead | null; // worst win% against (min 2 games)
   bestMatchup: HeadToHead | null;
   rankDelta: number | null; // movement vs. 5 games ago, null if not enough data
+
+  // --- Rating quality / confidence ---
+  /** ±half-width of the skill estimate (2σ). Big = still settling. */
+  ratingPlusMinus: number;
+  /** Std-dev of game-to-game μ swings. High = streaky, low = metronomic. */
+  volatility: number;
+
+  // --- Performance vs. expectation ---
+  /** Sum of this player's own pre-game win probabilities across their games. */
+  expectedWins: number;
+  /** actual wins − expectedWins. Positive = over-performing their rating. */
+  winsAboveExpectation: number;
+  /** expectedWins / games — how often they'd be expected to win given who they played. */
+  expectedWinRate: number;
+
+  // --- Clutch / close games ---
+  /** Win rate in deuce (past-target) games; null if none. */
+  clutchWinRate: number | null;
+  /** Record in games decided by ≤ 2 points. */
+  closeGameRecord: { wins: number; losses: number };
+
+  // --- Record by opponent strength (pre-game rating) ---
+  vsStronger: { wins: number; losses: number };
+  vsWeaker: { wins: number; losses: number };
+  /** Average current rating of opponents faced. null if no games. */
+  strengthOfSchedule: number | null;
+
+  // --- Momentum / form ---
+  /** Exposed-rating change over the last (≤5) games. */
+  momentum: number;
+  /** Win rate over the last (≤10) games; null if none. */
+  recentWinRate: number | null;
+  /** Recency-weighted exposed rating (EWMA) — current "form" vs career standing. */
+  formExposed: number;
+
+  // --- Signature games (by opponent rating) ---
+  /** Win against the highest-rated opponent relative to self. */
+  bestWinByRating: ProcessedGame | null;
+  /** Loss to the lowest-rated opponent relative to self. */
+  worstLossByRating: ProcessedGame | null;
+
+  // --- Misc ---
+  /** Share of total points won: pointsFor / (pointsFor + pointsAgainst). */
+  pointWinRate: number;
+  /** upsetsPulled / games. */
+  upsetRate: number;
+  /** exposed − peakRating (≤ 0). How far off their best. */
+  ratingFromPeak: number;
+  mostPlayedOpponentId: string | null;
+  lastPlayedAt: number | null;
+}
+
+/** A league award: a player plus the metric value that earned it. */
+export interface Superlative {
+  player: Player;
+  value: number;
+  detail?: string;
+}
+
+/** A close, frequently-played, evenly-split pairing. */
+export interface Rivalry {
+  aId: string;
+  bId: string;
+  games: number;
+  aWins: number;
+  bWins: number;
+  avgMargin: number; // average absolute point margin (tightness)
+  closeness: number; // 0..1 — evenness × tightness
+}
+
+/** A suggested pairing, ranked by how balanced it would be. */
+export interface MatchSuggestion {
+  aId: string;
+  bId: string;
+  winProbA: number; // P(a beats b)
+  quality: number; // 0..1 closeness, 1 = a perfect coin-flip
+  drawProbability: number; // model's predicted draw likelihood
 }
 
 export interface LeagueStats {
@@ -104,6 +183,19 @@ export interface LeagueStats {
   mostLopsided: ProcessedGame[];
   longestActiveStreak: { player: Player; length: number } | null;
   mostActive: { player: Player; games: number } | null;
+
+  // --- Player superlatives (derived from per-player stats) ---
+  mostImproved: Superlative | null; // biggest exposed gain over last ≤5 games
+  giantSlayer: { player: Player; game: ProcessedGame } | null; // pulled the biggest upset
+  mostClutch: Superlative | null; // best deuce win rate (≥2 deuce games)
+  steadiest: Superlative | null; // lowest rating volatility (≥3 games)
+  streakiest: Superlative | null; // highest rating volatility (≥3 games)
+  overachiever: Superlative | null; // most wins above expectation (≥3 games)
+  underachiever: Superlative | null; // most wins below expectation (≥3 games)
+
+  // --- Pairings ---
+  rivalries: Rivalry[]; // closest, most-contested matchups
+  fairestMatches: MatchSuggestion[]; // most balanced pairings to schedule next
 }
 
 export const PROVISIONAL_THRESHOLD = 5;

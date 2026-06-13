@@ -153,3 +153,108 @@ describe("rating engine behavior", () => {
     expect(st.processedGames[1].isDeuce).toBe(false);
   });
 });
+
+describe("rating-quality & performance stats", () => {
+  it("ratingPlusMinus is 2σ", () => {
+    const { players, games } = season();
+    const st = compute(players, games);
+    for (const p of players) {
+      const s = st.playerStats[p.id];
+      expect(s.ratingPlusMinus).toBeCloseTo(2 * s.rating.sigma, 9);
+    }
+  });
+
+  it("expected wins are conserved: Σ winsAboveExpectation ≈ 0", () => {
+    const { players, games } = season();
+    const st = compute(players, games);
+    const total = Object.values(st.playerStats).reduce((a, s) => a + s.winsAboveExpectation, 0);
+    expect(Math.abs(total)).toBeLessThan(1e-6);
+  });
+
+  it("stronger/weaker buckets partition each player's games", () => {
+    const { players, games } = season();
+    const st = compute(players, games);
+    for (const p of players) {
+      const s = st.playerStats[p.id];
+      const bucketed =
+        s.vsStronger.wins + s.vsStronger.losses + s.vsWeaker.wins + s.vsWeaker.losses;
+      expect(bucketed).toBe(s.games);
+    }
+  });
+
+  it("momentum is positive on a win streak, negative on a losing streak", () => {
+    const st = compute(
+      [player("X", 1), player("Y", 2)],
+      Array.from({ length: 6 }, () => game("X", "Y", 11, 5)),
+    );
+    expect(st.playerStats.X.momentum).toBeGreaterThan(0);
+    expect(st.playerStats.Y.momentum).toBeLessThan(0);
+  });
+
+  it("clutch win rate matches the deuce record, and is null without deuce games", () => {
+    const clutch = compute(
+      [player("A", 1), player("B", 2)],
+      [game("A", "B", 13, 11), game("A", "B", 11, 9)],
+    ).playerStats.A;
+    expect(clutch.deuceGames).toBe(1);
+    expect(clutch.clutchWinRate).toBeCloseTo(
+      clutch.deuceRecord.wins / (clutch.deuceRecord.wins + clutch.deuceRecord.losses),
+      9,
+    );
+    const noDeuce = compute([player("A", 1), player("B", 2)], [game("A", "B", 11, 5)]).playerStats.A;
+    expect(noDeuce.clutchWinRate).toBeNull();
+  });
+
+  it("head-to-head netAvgMargin is equal and opposite for the two sides", () => {
+    const st = compute(
+      [player("X", 1), player("Y", 2)],
+      [game("X", "Y", 11, 2), game("X", "Y", 11, 3), game("Y", "X", 11, 9)],
+    );
+    const xVsY = st.playerStats.X.headToHead.find((h) => h.opponentId === "Y")!;
+    const yVsX = st.playerStats.Y.headToHead.find((h) => h.opponentId === "X")!;
+    expect(xVsY.netAvgMargin!).toBeGreaterThan(0);
+    expect(xVsY.netAvgMargin!).toBeCloseTo(-yVsX.netAvgMargin!, 9);
+  });
+});
+
+describe("league superlatives & pairings", () => {
+  it("crowns the biggest upset's winner as giant slayer", () => {
+    const games: Game[] = [];
+    for (let i = 0; i < 6; i++) games.push(game("S", "F", 11, 2)); // S strong
+    for (let i = 0; i < 6; i++) games.push(game("F", "W", 11, 2)); // W weak
+    games.push(game("W", "S", 11, 7)); // weak beats strong = upset
+    const st = compute([player("S", 1), player("F", 2), player("W", 3)], games);
+    expect(st.league.giantSlayer).not.toBeNull();
+    expect(st.league.giantSlayer!.player.id).toBe("W");
+  });
+
+  it("ranks an even, tight, frequent pairing as the top rivalry", () => {
+    const games: Game[] = [
+      game("R1", "R2", 11, 9),
+      game("R2", "R1", 11, 9),
+      game("R1", "R2", 13, 11),
+      game("R2", "R1", 11, 9), // R1/R2: 2-2, tight
+      game("D1", "D2", 11, 1),
+      game("D1", "D2", 11, 2),
+      game("D1", "D2", 11, 0), // D1/D2: 3-0, blowouts
+    ];
+    const players = [player("R1", 1), player("R2", 2), player("D1", 3), player("D2", 4)];
+    const riv = compute(players, games).league.rivalries;
+    expect(riv.length).toBeGreaterThan(0);
+    const key = [riv[0].aId, riv[0].bId].sort().join("|");
+    expect(key).toBe("R1|R2");
+  });
+
+  it("suggests fairest matches sorted by balance, each a valid probability", () => {
+    const { players, games } = season();
+    const fm = compute(players, games).league.fairestMatches;
+    expect(fm.length).toBeGreaterThan(0);
+    for (let i = 1; i < fm.length; i++) {
+      expect(fm[i - 1].quality).toBeGreaterThanOrEqual(fm[i].quality);
+    }
+    expect(fm[0].quality).toBeGreaterThanOrEqual(0);
+    expect(fm[0].quality).toBeLessThanOrEqual(1);
+    expect(fm[0].winProbA).toBeGreaterThan(0);
+    expect(fm[0].winProbA).toBeLessThan(1);
+  });
+});

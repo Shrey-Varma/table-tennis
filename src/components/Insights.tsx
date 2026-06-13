@@ -81,6 +81,48 @@ export function Insights({
             <div className="s">{league.mostActive.games} played</div>
           </div>
         )}
+        {league.mostImproved && (
+          <div className="tile">
+            <div className="v">{league.mostImproved.player.name}</div>
+            <div className="k">Most improved</div>
+            <div className="s">+{league.mostImproved.value.toFixed(1)} over last 5</div>
+          </div>
+        )}
+        {league.giantSlayer && (
+          <div className="tile">
+            <div className="v">{league.giantSlayer.player.name}</div>
+            <div className="k">Giant slayer</div>
+            <div className="s">won at {pct(league.giantSlayer.game.winnerPreProb)} odds</div>
+          </div>
+        )}
+        {league.mostClutch && (
+          <div className="tile">
+            <div className="v">{league.mostClutch.player.name}</div>
+            <div className="k">Most clutch</div>
+            <div className="s">{pct(league.mostClutch.value)} in deuce games</div>
+          </div>
+        )}
+        {league.overachiever && (
+          <div className="tile">
+            <div className="v">{league.overachiever.player.name}</div>
+            <div className="k">Overachiever</div>
+            <div className="s">{league.overachiever.value >= 0 ? "+" : ""}{league.overachiever.value.toFixed(1)} wins vs expected</div>
+          </div>
+        )}
+        {league.streakiest && (
+          <div className="tile">
+            <div className="v">{league.streakiest.player.name}</div>
+            <div className="k">Most volatile</div>
+            <div className="s">streakiest game-to-game</div>
+          </div>
+        )}
+        {league.steadiest && (
+          <div className="tile">
+            <div className="v">{league.steadiest.player.name}</div>
+            <div className="k">Most consistent</div>
+            <div className="s">steadiest ratings</div>
+          </div>
+        )}
       </div>
 
       <div className="panel">
@@ -131,6 +173,55 @@ export function Insights({
             <thead><tr><th>When</th><th>Result</th><th className="num">Score</th><th className="num">Margin</th></tr></thead>
             <tbody>{league.mostLopsided.map((g) => gameRow(g, `+${g.margin}`))}</tbody>
           </table>
+        </div>
+
+        <div className="panel" style={{ overflow: "auto" }}>
+          <h3>Rivalries of the season</h3>
+          {league.rivalries.length === 0 ? (
+            <p style={{ color: "var(--muted)" }}>Rematches build rivalries — keep playing the same people.</p>
+          ) : (
+            <table className="data">
+              <thead><tr><th>Matchup</th><th className="num">Series</th><th className="num">Games</th><th className="num">Avg margin</th></tr></thead>
+              <tbody>
+                {league.rivalries.map((r) => (
+                  <tr key={r.aId + r.bId}>
+                    <td>
+                      <span className="row-click" onClick={() => onOpenPlayer(r.aId)} style={{ fontWeight: 600 }}>{nameOf(r.aId)}</span>
+                      <span style={{ color: "var(--faint)" }}> vs </span>
+                      <span className="row-click" onClick={() => onOpenPlayer(r.bId)} style={{ fontWeight: 600 }}>{nameOf(r.bId)}</span>
+                    </td>
+                    <td className="num">{r.aWins}–{r.bWins}</td>
+                    <td className="num">{r.games}</td>
+                    <td className="num">{r.avgMargin.toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div className="panel" style={{ overflow: "auto" }}>
+          <h3>Fairest matches to play next</h3>
+          {league.fairestMatches.length === 0 ? (
+            <p style={{ color: "var(--muted)" }}>Needs two players who've each logged a game.</p>
+          ) : (
+            <table className="data">
+              <thead><tr><th>Matchup</th><th className="num">Balance</th><th className="num">Odds</th></tr></thead>
+              <tbody>
+                {league.fairestMatches.map((m) => (
+                  <tr key={m.aId + m.bId}>
+                    <td>
+                      <span className="row-click" onClick={() => onOpenPlayer(m.aId)}>{nameOf(m.aId)}</span>
+                      <span style={{ color: "var(--faint)" }}> vs </span>
+                      <span className="row-click" onClick={() => onOpenPlayer(m.bId)}>{nameOf(m.bId)}</span>
+                    </td>
+                    <td className="num">{pct(m.quality)}</td>
+                    <td className="num" style={{ color: "var(--muted)" }}>{pct(m.winProbA)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className="panel" style={{ overflow: "auto" }}>

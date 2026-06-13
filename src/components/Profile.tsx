@@ -131,6 +131,62 @@ export function Profile({
             <div className="s">{s.bestMatchup.wins}–{s.bestMatchup.losses} against them</div>
           </div>
         )}
+
+        {/* rating-quality & performance */}
+        <div className="tile">
+          <div className="v num">±{s.ratingPlusMinus.toFixed(1)}</div>
+          <div className="k">Confidence</div>
+          <div className="s">{s.provisional ? "still settling" : "rating is well-established"}</div>
+        </div>
+        <div className="tile">
+          <div className="v num">{fmt1(s.formExposed)}</div>
+          <div className="k">Form rating</div>
+          <div className="s">{s.momentum >= 0 ? "+" : ""}{s.momentum.toFixed(1)} over last {Math.min(5, s.games)}</div>
+        </div>
+        <div className="tile">
+          <div className="v num" style={{ color: s.winsAboveExpectation >= 0 ? "var(--green)" : "var(--red)" }}>
+            {s.winsAboveExpectation >= 0 ? "+" : ""}{s.winsAboveExpectation.toFixed(1)}
+          </div>
+          <div className="k">Wins vs expected</div>
+          <div className="s">expected {s.expectedWins.toFixed(1)} of {s.games}</div>
+        </div>
+        <div className="tile">
+          <div className="v num">{s.clutchWinRate !== null ? pct(s.clutchWinRate) : "—"}</div>
+          <div className="k">Clutch (deuce) win%</div>
+          <div className="s">{s.deuceRecord.wins}–{s.deuceRecord.losses} in deuce games</div>
+        </div>
+        <div className="tile">
+          <div className="v num">{s.vsStronger.wins}–{s.vsStronger.losses}</div>
+          <div className="k">vs higher-rated</div>
+          <div className="s">vs lower-rated: {s.vsWeaker.wins}–{s.vsWeaker.losses}</div>
+        </div>
+        <div className="tile">
+          <div className="v num">{s.volatility.toFixed(2)}</div>
+          <div className="k">Volatility</div>
+          <div className="s">lower = steadier</div>
+        </div>
+        <div className="tile">
+          <div className="v num">{s.strengthOfSchedule !== null ? fmt1(s.strengthOfSchedule) : "—"}</div>
+          <div className="k">Strength of schedule</div>
+          <div className="s">avg opponent rating</div>
+        </div>
+        <div className="tile">
+          <div className="v num">{pct(s.pointWinRate)}</div>
+          <div className="k">Points won</div>
+          <div className="s">{s.recentWinRate !== null ? `${pct(s.recentWinRate)} recent game win%` : ""}</div>
+        </div>
+        {s.bestWinByRating && (() => {
+          const g = s.bestWinByRating;
+          const isA = g.aId === playerId;
+          const gap = (isA ? g.bBefore.exposed : g.aBefore.exposed) - (isA ? g.aBefore.exposed : g.bBefore.exposed);
+          return (
+            <div className="tile">
+              <div className="v num">{g.winnerScore}–{g.loserScore}</div>
+              <div className="k">Signature win</div>
+              <div className="s">vs {nameOf(g.loserId)}{gap > 0 ? ` (+${gap.toFixed(1)} rated)` : ""}</div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* rating history */}
@@ -170,6 +226,7 @@ export function Profile({
                 <th className="num">Record</th>
                 <th className="num">Points</th>
                 <th className="num">Avg win by</th>
+                <th className="num">Net pts/game</th>
                 <th>Last 5</th>
                 <th style={{ width: 190 }}>Chance to win next game</th>
               </tr>
@@ -186,6 +243,9 @@ export function Profile({
                     <td className="num">{m.wins}–{m.losses}</td>
                     <td className="num">{m.pointsFor}–{m.pointsAgainst}</td>
                     <td className="num">{m.avgMarginInWins !== null ? `+${m.avgMarginInWins.toFixed(1)}` : "—"}</td>
+                    <td className="num" style={{ color: m.netAvgMargin == null ? undefined : m.netAvgMargin >= 0 ? "var(--green)" : "var(--red)" }}>
+                      {m.netAvgMargin !== null ? `${m.netAvgMargin >= 0 ? "+" : ""}${m.netAvgMargin.toFixed(1)}` : "—"}
+                    </td>
                     <td><FormDots form={m.lastResults} /></td>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
