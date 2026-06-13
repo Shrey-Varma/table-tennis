@@ -38,7 +38,7 @@ vi.mock("../api/_db", () => ({
   isUniqueViolation: (e: unknown) => (e as { code?: string })?.code === "23505",
 }));
 
-const { app } = await import("../api/[[...route]]");
+const { app } = await import("../api/index");
 
 const post = (path: string, body: unknown, headers: Record<string, string> = {}) =>
   app.request(path, {
@@ -140,7 +140,7 @@ describe("passcode gate", () => {
   it("blocks mutations without the key and allows them with it", async () => {
     vi.resetModules();
     process.env.LEAGUE_PASSCODE = "open-sesame";
-    const { app: guarded } = await import("../api/[[...route]]");
+    const { app: guarded } = await import("../api/index");
     const blocked = await guarded.request("/api/players", {
       method: "POST",
       body: JSON.stringify({ name: "X" }),

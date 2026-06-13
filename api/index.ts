@@ -1,7 +1,8 @@
 /* Pong Rank API — a single Vercel serverless function (Node runtime) that routes
- * all endpoints with Hono. Mirrors the old FastAPI surface in backend/main.py:
- * every mutation returns the full recomputed state, and errors are returned as
- * { detail } JSON so the existing frontend (src/api.ts) is unchanged. */
+ * all endpoints with Hono. vercel.json rewrites every /api/* request to this
+ * function, and Hono's basePath("/api") dispatches internally. Mirrors the old
+ * FastAPI surface in backend/main.py: every mutation returns the full recomputed
+ * state, and errors are returned as { detail } JSON so the frontend is unchanged. */
 import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
