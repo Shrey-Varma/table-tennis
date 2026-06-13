@@ -9,7 +9,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { handle } from "hono/vercel";
 import type { Game, Player } from "../src/types";
-import { compute } from "./_engine";
+import { compute } from "./_engine.js";
 import {
   countGames,
   countPlayers,
@@ -22,8 +22,8 @@ import {
   load,
   playersPresent,
   replaceLeague,
-} from "./_db";
-import { PLAYER_COLORS, checkKey, uid, validateGame } from "./_validate";
+} from "./_db.js";
+import { PLAYER_COLORS, checkKey, uid, validateGame } from "./_validate.js";
 
 export const app = new Hono().basePath("/api");
 app.use("*", cors());
